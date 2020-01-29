@@ -1,0 +1,82 @@
+version: '3.3'
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysqldb    
+    environment:
+      - MYSQL_ROOT_PASSWORD=mukit
+      - MYSQL_DATABASE=customerservice
+      - MYSQL_DATABASE=bankservice
+      #- MYSQL_USER=root
+      #- MYSQL_PASSWORD=mukit
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - mysqlnetwork
+    #volumes:
+    #- ./mysql:/docker-entrypoint-initdb.d:ro
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5673:5672
+      - 15673:15672
+    restart: always
+    networks:
+      - mysqlnetwork
+  
+  customerservice:
+    image: spring-boot-bank-customer-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 6080:6080
+    restart: always
+    depends_on: 
+      - rabbitmq
+      #- mysql
+    links:
+      - mysql:db
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/customerservice?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      #- SPRING_DATASOURCE_USERNAME=root
+      #- SPRING_DATASOURCE_PASSWORD=mukit
+      #- DATABASE_HOST=mysqldb
+      #- DATABASE_USER=root
+      #- DATABASE_PASSWORD=mukit
+      #- DATABASE_NAME=customerservice
+      #- DATABASE_PORT=3306
+    networks:
+      - mysqlnetwork
+   
+   
+  bankservice:
+    image: "bankservice:latest"
+    ports:
+      - "6081:6081"
+    restart: always
+    depends_on: 
+      - rabbitmq
+      #- mysql
+    links:
+      - mysql:db
+    networks:
+      - mysqlnetwork
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATASOURCE_URL=jdbc:mysqldb://mysql:3306/bankservice?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      #- SPRING_DATASOURCE_USERNAME=root
+      #- SPRING_DATASOURCE_PASSWORD=mukit
+      #- DATABASE_HOST=mysql
+      #- DATABASE_USER=root
+      #- DATABASE_PASSWORD=mukit
+      #- DATABASE_NAME=bankservice
+      #- DATABASE_PORT=3306
+
+networks:
+  mysqlnetwork:
