@@ -6,7 +6,7 @@ spec:
   source:
     git:
       ref: master
-      uri: 'Link'
+      uri: 'https://github.com/phoenixm103/customer-service-app'
     sourceSecret:
       name: github-secret
     type: Git
