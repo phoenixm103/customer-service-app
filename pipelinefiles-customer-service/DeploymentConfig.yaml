@@ -1,0 +1,74 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: customer-service
+  name: customer-service
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    app: customer-service
+    deploymentconfig: customer-service
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: customer-service
+        deploymentconfig: customer-service
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_DATABASE
+              value: customer
+            - name: STATE_CHANNEL
+              value: customer
+            - name: MYSQL_USER
+              value: root
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: 'yes'
+          image: 'mysql:5.6'
+          imagePullPolicy: IfNotPresent
+          name: mysqlserver
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+        - image: docker-registry.default.svc:5000/demo/customer-service
+          imagePullPolicy: Always
+          name: customer-service
+          ports:
+           - containerPort: 6080
+             protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: customer-service
+  triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - customer-service
+        from:
+          kind: ImageStreamTag
+          name: 'customer-service:latest'
+          namespace: demo
+      type: ImageChange
+

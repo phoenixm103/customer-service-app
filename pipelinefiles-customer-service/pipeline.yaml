@@ -1,0 +1,17 @@
+kind: "BuildConfig"
+apiVersion: "v1"
+metadata:
+  name: customer-service-app
+spec:
+  source:
+    git:
+      ref: master
+      uri: 'Link'
+    sourceSecret:
+      name: github-secret
+    type: Git
+  strategy:
+    jenkinsPipelineStrategy:
+      jenkinsfilePath: jenkins/Jenkinsfileforcustomerservice
+    type: JenkinsPipeline 
+

@@ -1,0 +1,23 @@
+
+pipeline{
+  agent { label 'maven' }
+  stages{
+    stage ('checkout'){
+      steps{
+        checkout scm
+      }
+    }
+    stage ('build') {
+      steps{
+      sh "mvn clean package -Dmaven.test.skip=true"       
+      }
+    }
+    stage ('build image') {
+      steps{
+        sh '''
+          oc start-build customer-service --from-dir=. --follow
+        '''
+      }
+    }
+  }
+}
